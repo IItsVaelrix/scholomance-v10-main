@@ -1,8 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
-
-const MAX_TITLE_LENGTH = 100;
-const MAX_CONTENT_LENGTH = 100000; // ~100KB text limit for localStorage safety
+import { SCROLL_LIMITS } from "../../data/scrollLimits";
 
 export default function ScrollEditor({
   initialTitle = "",
@@ -17,10 +15,14 @@ export default function ScrollEditor({
   const [isSaving, setIsSaving] = useState(false);
   const [validationError, setValidationError] = useState(null);
   const textareaRef = useRef(null);
+  const prevLengthRef = useRef(initialContent.length);
+  const effectTimeoutRef = useRef(null);
+  const [inkEffect, setInkEffect] = useState(null);
 
   useEffect(() => {
     setTitle(initialTitle);
     setContent(initialContent);
+    prevLengthRef.current = initialContent.length;
   }, [initialTitle, initialContent]);
 
   useEffect(() => {
@@ -28,6 +30,14 @@ export default function ScrollEditor({
       textareaRef.current.focus();
     }
   }, [initialContent]);
+
+  useEffect(() => {
+    return () => {
+      if (effectTimeoutRef.current) {
+        clearTimeout(effectTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const handleSave = async () => {
     setValidationError(null);
@@ -37,12 +47,12 @@ export default function ScrollEditor({
       setValidationError("Content cannot be empty");
       return;
     }
-    if (title.length > MAX_TITLE_LENGTH) {
-      setValidationError(`Title must be ${MAX_TITLE_LENGTH} characters or less`);
+    if (title.length > SCROLL_LIMITS.title) {
+      setValidationError(`Title must be ${SCROLL_LIMITS.title} characters or less`);
       return;
     }
-    if (content.length > MAX_CONTENT_LENGTH) {
-      setValidationError(`Content must be ${MAX_CONTENT_LENGTH.toLocaleString()} characters or less`);
+    if (content.length > SCROLL_LIMITS.content) {
+      setValidationError(`Content must be ${SCROLL_LIMITS.content.toLocaleString()} characters or less`);
       return;
     }
 
@@ -69,10 +79,31 @@ export default function ScrollEditor({
 
   const wordCount = content.trim() ? content.trim().split(/\s+/).length : 0;
   const charCount = content.length;
+  const isOverLimit = charCount > SCROLL_LIMITS.content;
+  const remaining = SCROLL_LIMITS.content - charCount;
+
+  const triggerInkEffect = (type) => {
+    setInkEffect(type);
+    if (effectTimeoutRef.current) {
+      clearTimeout(effectTimeoutRef.current);
+    }
+    effectTimeoutRef.current = setTimeout(() => setInkEffect(null), 240);
+  };
+
+  const handleContentChange = (value) => {
+    const prevLength = prevLengthRef.current;
+    setContent(value);
+    if (value.length > prevLength) {
+      triggerInkEffect("ink");
+    } else if (value.length < prevLength) {
+      triggerInkEffect("ash");
+    }
+    prevLengthRef.current = value.length;
+  };
 
   return (
     <motion.div
-      className="scroll-editor surface"
+      className={`scroll-editor surface ${content.trim() ? "has-text" : "is-empty"} ${inkEffect ? `ink-${inkEffect}` : ""}`}
       data-surface="editor"
       data-role="editor"
       initial={{ opacity: 0, y: 10 }}
@@ -88,11 +119,13 @@ export default function ScrollEditor({
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           disabled={disabled || isSaving}
-          maxLength={MAX_TITLE_LENGTH}
+          maxLength={SCROLL_LIMITS.title}
         />
         <div className="editor-stats">
           <span className="stat-badge">{wordCount} words</span>
-          <span className="stat-badge">{charCount} / {MAX_CONTENT_LENGTH.toLocaleString()} chars</span>
+          <span className={`stat-badge ${isOverLimit ? "stat-badge--alert" : ""}`}>
+            {charCount} / {SCROLL_LIMITS.content.toLocaleString()} chars
+          </span>
         </div>
       </div>
 
@@ -116,10 +149,10 @@ export default function ScrollEditor({
 
 Click any word after saving to analyze its phonetic structure."
           value={content}
-          onChange={(e) => setContent(e.target.value)}
+          onChange={(e) => handleContentChange(e.target.value)}
           onKeyDown={handleKeyDown}
           disabled={disabled || isSaving}
-          maxLength={MAX_CONTENT_LENGTH}
+          maxLength={SCROLL_LIMITS.content}
           spellCheck="false"
         />
       </div>
@@ -131,6 +164,11 @@ Click any word after saving to analyze its phonetic structure."
             <>
               {" "}&middot; <kbd>Esc</kbd> to cancel
             </>
+          )}
+          {isOverLimit && (
+            <span className="editor-warning">
+              Reduce by {Math.abs(remaining)} chars to save
+            </span>
           )}
         </div>
         <div className="editor-actions">
@@ -148,7 +186,7 @@ Click any word after saving to analyze its phonetic structure."
             type="button"
             className="editor-btn editor-btn--primary"
             onClick={handleSave}
-            disabled={disabled || isSaving || !content.trim()}
+            disabled={disabled || isSaving || !content.trim() || isOverLimit}
           >
             {isSaving ? (
               <>

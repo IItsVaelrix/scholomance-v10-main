@@ -2,12 +2,12 @@ export const STATE_CLASS_MAP = {
   section: {
     watch: "mode-watch",
     listen: "mode-listen",
-    read: "mode-read",
+    write: "mode-write",
   },
   theme: {
     watch: "page-theme--watch",
     listen: "page-theme--listen",
-    read: "page-theme--read",
+    write: "page-theme--write",
   },
   view: {
     editor: "mode-editor",

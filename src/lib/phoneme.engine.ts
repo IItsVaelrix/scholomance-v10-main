@@ -20,20 +20,31 @@ type PhonemeAnalysis = {
   rhymeKey: string;
 };
 
+type CmuEntry = {
+  ph: string[];
+  vf: string[];
+  cd: string[];
+};
+
 export const PhonemeEngine = {
   DICT_V2: null as PhonemeDict | null,
   RULES_V2: null as Record<string, unknown> | null,
+  CMU_DICT: null as Record<string, CmuEntry> | null,
   WORD_CACHE: new Map<string, PhonemeAnalysis>(),
 
   async init(options: { signal?: AbortSignal } = {}) {
     try {
-      const [dict, rules] = await Promise.all([
+      const [dict, rules, cmuDict] = await Promise.all([
         fetch("/phoneme_dictionary_v2.json", { signal: options.signal }).then((r) => r.json()),
         fetch("/rhyme_matching_rules_v2.json", { signal: options.signal }).then((r) => r.json()),
+        fetch("/dicts/cmudict.min.json", { signal: options.signal })
+          .then((r) => (r.ok ? r.json() : null))
+          .catch(() => null),
       ]);
 
       this.DICT_V2 = dict;
       this.RULES_V2 = rules;
+      this.CMU_DICT = cmuDict;
 
       console.log(`ST-XPD v2 Active: ${dict.vowel_families.length} Families.`);
       return dict.vowel_families.length;
@@ -48,12 +59,27 @@ export const PhonemeEngine = {
   },
 
   analyzeWord(word: string): PhonemeAnalysis | null {
-    const upper = String(word || "").toUpperCase();
+    const upper = normalizeToken(word);
     if (!upper) return null;
 
     // Check cache first
     if (this.WORD_CACHE.has(upper)) {
       return this.WORD_CACHE.get(upper);
+    }
+
+    // Prefer CMUdict if available
+    if (this.CMU_DICT?.[upper]) {
+      const entry = this.CMU_DICT[upper];
+      const vowelFamily = entry.vf?.[entry.vf.length - 1] || "UH";
+      const coda = entry.cd?.length ? entry.cd.join("") : null;
+      const result: PhonemeAnalysis = {
+        vowelFamily,
+        phonemes: entry.ph,
+        coda,
+        rhymeKey: `${vowelFamily}-${coda || "open"}`,
+      };
+      this.WORD_CACHE.set(upper, result);
+      return result;
     }
 
     // If dictionary is loaded, try to look up
@@ -158,3 +184,10 @@ export const PhonemeEngine = {
     return false;
   },
 };
+
+function normalizeToken(word: string) {
+  return String(word || "")
+    .replace(/[’‘]/g, "'")
+    .replace(/[^A-Za-z']/g, "")
+    .toUpperCase();
+}

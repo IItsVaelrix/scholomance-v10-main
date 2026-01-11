@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import { AnimatePresence } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import { usePhonemeEngine } from "../../hooks/usePhonemeEngine.jsx";
 import { useScrolls } from "../../hooks/useScrolls.jsx";
 import GrimoireScroll from "./GrimoireScroll.jsx";
@@ -17,6 +17,7 @@ export default function ReadPage() {
   const [activeScrollId, setActiveScrollId] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [viewMode, setViewMode] = useState("editor"); // "editor" | "viewer"
+  const [isLibraryOpen, setIsLibraryOpen] = useState(false);
 
   const activeScroll = activeScrollId ? getScrollById(activeScrollId) : null;
 
@@ -59,6 +60,7 @@ export default function ReadPage() {
     setIsEditing(false);
     setViewMode("viewer");
     setAnnotation(null);
+    setIsLibraryOpen(false);
   }, []);
 
   const handleNewScroll = useCallback(() => {
@@ -66,6 +68,7 @@ export default function ReadPage() {
     setIsEditing(false);
     setViewMode("editor");
     setAnnotation(null);
+    setIsLibraryOpen(false);
   }, []);
 
   const handleEditScroll = useCallback(() => {
@@ -99,16 +102,16 @@ export default function ReadPage() {
   });
 
   return (
-    <section className={`readPage surface ${stateClasses}`} data-surface="read">
+    <section className={`writePage surface ${stateClasses}`} data-surface="write">
       {/* Ambient candlelight */}
       <div className="candle-ambience" aria-hidden="true" />
       <div className="candle-ambience candle-ambience--secondary" aria-hidden="true" />
 
-      <article className="container surface" data-surface="read-shell">
-        <header className="sectionHeader grimoire-header surface" data-surface="read-header">
+      <article className="container write-container surface" data-surface="write-shell">
+        <header className="sectionHeader grimoire-header surface" data-surface="write-header">
           <div className="kicker">The Arcane Codex</div>
           <h1 className="title grimoire-title">
-            <span className="illuminated-letter">S</span>cribe &amp; Analyze
+            <span className="illuminated-letter">W</span>rite &amp; Analyze
           </h1>
           <p className="subtitle grimoire-subtitle">
             Inscribe thy verses upon sacred scrolls. Each word becomes a portal —
@@ -128,77 +131,97 @@ export default function ReadPage() {
           )}
         </header>
 
-        <div className="codex-layout surface" data-surface="codex-layout">
-          {/* Left Panel: Scroll List */}
-          <aside className="codex-sidebar surface" data-surface="library" data-role="library">
-            <ScrollList
-              scrolls={scrolls}
-              activeScrollId={activeScrollId}
-              onSelect={handleSelectScroll}
-              onDelete={handleDeleteScroll}
-              onNewScroll={handleNewScroll}
-            />
-          </aside>
-
-          {/* Right Panel: Editor or Viewer */}
-          <main className="codex-main surface" data-surface="workbench">
-            <AnimatePresence mode="wait">
-              {viewMode === "editor" ? (
-                <ScrollEditor
-                  key={isEditing ? `edit-${activeScrollId}` : "new"}
-                  initialTitle={isEditing && activeScroll ? activeScroll.title : ""}
-                  initialContent={isEditing && activeScroll ? activeScroll.content : ""}
-                  onSave={handleSaveScroll}
-                  onCancel={isEditing ? handleCancelEdit : undefined}
-                  isEditing={isEditing}
-                  disabled={!isReady}
-                />
-              ) : activeScroll ? (
-                <article
-                  key={`view-${activeScrollId}`}
-                  className="scroll-viewer surface"
-                  data-surface="spellbook"
-                  data-role="spellbook"
-                >
-                  <div className="viewer-header">
-                    <h2 className="viewer-title">{activeScroll.title}</h2>
-                    <button
-                      type="button"
-                      className="viewer-edit-btn"
-                      onClick={handleEditScroll}
-                    >
-                      <span>&#x270E;</span> Edit
-                    </button>
-                  </div>
-                    <GrimoireScroll
-                      text={activeScroll.content}
-                      onWordClick={analyze}
-                      disabled={!isReady}
-                      onAnalyzeEthereal={() => {
-                        const words = activeScroll.content.split(/\s+/);
-                        if (words.length > 0) analyze(words[0]);
-                      }}
-                      isEngineReady={isReady}
-                    />
-                </article>
-              ) : (
-                <article className="scroll-placeholder surface" data-surface="empty">
-                  <div className="placeholder-sigil">&#x1F4DC;</div>
-                  <h3>Select or Create a Scroll</h3>
-                  <p>Choose a scroll from the list or start a new inscription.</p>
+        <main className="write-stage surface" data-surface="workbench">
+          <AnimatePresence mode="wait">
+            {viewMode === "editor" ? (
+              <ScrollEditor
+                key={isEditing ? `edit-${activeScrollId}` : "new"}
+                initialTitle={isEditing && activeScroll ? activeScroll.title : ""}
+                initialContent={isEditing && activeScroll ? activeScroll.content : ""}
+                onSave={handleSaveScroll}
+                onCancel={isEditing ? handleCancelEdit : undefined}
+                isEditing={isEditing}
+                disabled={!isReady}
+              />
+            ) : activeScroll ? (
+              <article
+                key={`view-${activeScrollId}`}
+                className="scroll-viewer surface"
+                data-surface="spellbook"
+                data-role="spellbook"
+              >
+                <div className="viewer-header">
+                  <h2 className="viewer-title">{activeScroll.title}</h2>
                   <button
                     type="button"
-                    className="grimoire-button"
-                    onClick={handleNewScroll}
+                    className="viewer-edit-btn"
+                    onClick={handleEditScroll}
                   >
-                    <span className="button-sigil">&#x271A;</span>
-                    Begin New Scroll
+                    <span>&#x270E;</span> Edit
                   </button>
-                </article>
-              )}
-            </AnimatePresence>
-          </main>
-        </div>
+                </div>
+                <GrimoireScroll
+                  text={activeScroll.content}
+                  onWordClick={analyze}
+                  disabled={!isReady}
+                  onAnalyzeEthereal={() => {
+                    const words = activeScroll.content.split(/\s+/);
+                    if (words.length > 0) analyze(words[0]);
+                  }}
+                  isEngineReady={isReady}
+                />
+              </article>
+            ) : (
+              <article className="scroll-placeholder surface" data-surface="empty">
+                <div className="placeholder-sigil">&#x1F4DC;</div>
+                <h3>Select or Create a Scroll</h3>
+                <p>Choose a scroll from the list or start a new inscription.</p>
+                <button
+                  type="button"
+                  className="grimoire-button"
+                  onClick={handleNewScroll}
+                >
+                  <span className="button-sigil">&#x271A;</span>
+                  Begin New Scroll
+                </button>
+              </article>
+            )}
+          </AnimatePresence>
+
+          <button
+            type="button"
+            className={`arcane-dresser ${isLibraryOpen ? "is-open" : ""}`}
+            onClick={() => setIsLibraryOpen((prev) => !prev)}
+            aria-expanded={isLibraryOpen}
+            aria-controls="scroll-library"
+          >
+            <span className="dresser-title">Archive Dresser</span>
+            <span className="dresser-hint">Tap to access scrolls</span>
+          </button>
+
+          <AnimatePresence>
+            {isLibraryOpen && (
+              <motion.aside
+                id="scroll-library"
+                className="library-drawer surface"
+                data-surface="library"
+                data-role="library"
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 16 }}
+                transition={{ duration: 0.2 }}
+              >
+                <ScrollList
+                  scrolls={scrolls}
+                  activeScrollId={activeScrollId}
+                  onSelect={handleSelectScroll}
+                  onDelete={handleDeleteScroll}
+                  onNewScroll={handleNewScroll}
+                />
+              </motion.aside>
+            )}
+          </AnimatePresence>
+        </main>
       </article>
 
       <AnimatePresence>

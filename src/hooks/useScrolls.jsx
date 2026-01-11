@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useEffect } from "react";
 import { useLocalStorage } from "react-use";
+import { SCROLL_LIMITS } from "../data/scrollLimits";
 
 const STORAGE_KEY = "scholomance-scrolls";
 const SCHEMA_VERSION = 1;
@@ -57,10 +58,12 @@ export function useScrolls() {
   const createScroll = useCallback(
     (title, content) => {
       const now = Date.now();
+      const safeTitle = String(title || "").trim().slice(0, SCROLL_LIMITS.title);
+      const safeContent = String(content || "").trim().slice(0, SCROLL_LIMITS.content);
       const newScroll = {
         id: generateId(),
-        title: title.trim() || "Untitled Scroll",
-        content: content.trim(),
+        title: safeTitle || "Untitled Scroll",
+        content: safeContent,
         createdAt: now,
         updatedAt: now,
         _version: SCHEMA_VERSION,
@@ -76,7 +79,18 @@ export function useScrolls() {
       setRawScrolls((prev) =>
         (prev || []).map((scroll) =>
           scroll.id === id
-            ? { ...scroll, ...updates, updatedAt: Date.now(), _version: SCHEMA_VERSION }
+            ? {
+                ...scroll,
+                ...updates,
+                title: updates.title
+                  ? String(updates.title).trim().slice(0, SCROLL_LIMITS.title)
+                  : scroll.title,
+                content: updates.content
+                  ? String(updates.content).trim().slice(0, SCROLL_LIMITS.content)
+                  : scroll.content,
+                updatedAt: Date.now(),
+                _version: SCHEMA_VERSION,
+              }
             : scroll
         )
       );

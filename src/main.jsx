@@ -1,6 +1,6 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-import { createBrowserRouter, RouterProvider } from "react-router-dom";
+import { createBrowserRouter, RouterProvider, Navigate } from "react-router-dom";
 import { ErrorBoundary } from "./components/shared/ErrorBoundary.jsx";
 import App from "./App.jsx";
 import WatchPage from "./pages/Watch/WatchPage.jsx";
@@ -16,7 +16,8 @@ const router = createBrowserRouter([
       { index: true, element: <WatchPage /> },
       { path: "watch", element: <WatchPage /> },
       { path: "listen", element: <ListenPage /> },
-      { path: "read", element: <ReadPage /> },
+      { path: "write", element: <ReadPage /> },
+      { path: "read", element: <Navigate to="/write" replace /> },
     ],
   },
 ]);

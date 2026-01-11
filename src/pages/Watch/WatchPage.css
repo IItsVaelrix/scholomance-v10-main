@@ -171,6 +171,7 @@
 .videoFrame {
   aspect-ratio: 16 / 9;
   width: 100%;
+  position: relative;
 }
 
 .videoFrame iframe {
@@ -178,6 +179,34 @@
   height: 100%;
   border: 0;
   display: block;
+}
+
+.videoFrame.is-loading iframe {
+  opacity: 0;
+}
+
+.video-loading {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  gap: 8px;
+  font-family: var(--mono);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-size: 11px;
+  color: rgba(238, 240, 255, 0.7);
+  background: radial-gradient(circle at center, rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.9));
+}
+
+.loading-sigil {
+  font-size: 20px;
+  animation: loading-spin 2s linear infinite;
+}
+
+@keyframes loading-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
 /* Bottom info panel with LCD displays */

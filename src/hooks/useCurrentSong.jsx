@@ -1,21 +1,22 @@
 import { createContext, useContext, useState, useMemo } from "react";
-import { LIBRARY } from "../data/library";
+import { resolveLibrary } from "../data/library";
 
 const SongContext = createContext(null);
 
 export function SongProvider({ children }) {
   const [currentKey, setCurrentKey] = useState("lexiconic");
+  const [library] = useState(() => resolveLibrary());
 
   const value = useMemo(
     () => ({
       currentKey,
-      currentSong: LIBRARY[currentKey] || Object.values(LIBRARY)[0],
+      currentSong: library[currentKey] || Object.values(library)[0],
       setCurrentKey: (key) => {
-        if (LIBRARY[key]) setCurrentKey(key);
+        if (library[key]) setCurrentKey(key);
       },
-      library: LIBRARY,
+      library,
     }),
-    [currentKey]
+    [currentKey, library]
   );
 
   return <SongContext.Provider value={value}>{children}</SongContext.Provider>;

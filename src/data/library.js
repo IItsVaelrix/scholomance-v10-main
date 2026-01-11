@@ -33,10 +33,12 @@ export const LIBRARY = {
   },
 };
 
+export const LIBRARY_STORAGE_KEY = "scholomance-library";
+
 export const LINKS = [
   { id: "watch", path: "/watch", label: "Watch" },
   { id: "listen", path: "/listen", label: "Listen" },
-  { id: "read", path: "/read", label: "Read" },
+  { id: "write", path: "/write", label: "Write" },
 ];
 
 export const COLORS = {
@@ -57,4 +59,46 @@ export const SCHOOL_ANGLES = {
 
 export function schoolToBadgeClass(school) {
   return `badge--${String(school || "").toLowerCase()}`;
+}
+
+export function resolveLibrary() {
+  if (typeof window === "undefined") return LIBRARY;
+  try {
+    const raw = window.localStorage.getItem(LIBRARY_STORAGE_KEY);
+    if (!raw) return LIBRARY;
+    const parsed = JSON.parse(raw);
+    const normalized = normalizeLibrary(parsed);
+    return Object.keys(normalized).length ? normalized : LIBRARY;
+  } catch (err) {
+    console.warn("Failed to load library override", err);
+    return LIBRARY;
+  }
+}
+
+function normalizeLibrary(data) {
+  if (Array.isArray(data)) {
+    return data.reduce((acc, entry) => {
+      if (!entry?.id || !entry?.title || !entry?.school) return acc;
+      acc[entry.id] = {
+        title: entry.title,
+        yt: entry.yt || "",
+        sc: entry.sc || "",
+        school: String(entry.school || "").toUpperCase(),
+      };
+      return acc;
+    }, {});
+  }
+  if (data && typeof data === "object") {
+    return Object.entries(data).reduce((acc, [key, entry]) => {
+      if (!entry?.title || !entry?.school) return acc;
+      acc[key] = {
+        title: entry.title,
+        yt: entry.yt || "",
+        sc: entry.sc || "",
+        school: String(entry.school || "").toUpperCase(),
+      };
+      return acc;
+    }, {});
+  }
+  return {};
 }

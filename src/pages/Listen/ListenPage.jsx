@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import { motion, useAnimation } from "framer-motion";
 import { useCurrentSong } from "../../hooks/useCurrentSong.jsx";
-import { COLORS, LIBRARY } from "../../data/library";
+import { COLORS } from "../../data/library";
 import NixieTube from "./NixieTube.jsx";
 import BrassGearDial from "./BrassGearDial.jsx";
 import HolographicEmbed from "./HolographicEmbed.jsx";
@@ -9,13 +9,13 @@ import { getStateClass } from "../../js/stateClasses.js";
 import "./ListenPage.css";
 
 export default function ListenPage() {
-  const { currentKey, currentSong, setCurrentKey } = useCurrentSong();
+  const { currentKey, currentSong, setCurrentKey, library } = useCurrentSong();
   const [isTuning, setIsTuning] = useState(false);
   const interfaceControls = useAnimation();
 
   const currentColor = COLORS[currentSong.school] || COLORS.VOID;
   const schoolClass = getStateClass("school", currentSong.school);
-  const entries = useMemo(() => Object.entries(LIBRARY), []);
+  const entries = useMemo(() => Object.entries(library || {}), [library]);
 
   const handleTune = async (targetSchool, songKey) => {
     if (isTuning) return;
@@ -85,8 +85,8 @@ export default function ListenPage() {
                   const keys = entries.map(([k]) => k);
                   const idx = Math.max(0, keys.indexOf(currentKey));
                   const nextKey = keys[(idx + 1) % keys.length];
-                  const next = LIBRARY[nextKey];
-                  handleTune(next.school, nextKey);
+                  const next = library[nextKey];
+                  if (next) handleTune(next.school, nextKey);
                 }}
                 disabled={isTuning}
               />

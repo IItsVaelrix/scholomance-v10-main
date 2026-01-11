@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useCurrentSong } from "../../hooks/useCurrentSong.jsx";
 import { schoolToBadgeClass } from "../../data/library";
@@ -7,6 +8,11 @@ import "./WatchPage.css";
 export default function WatchPage() {
   const { currentSong } = useCurrentSong();
   const schoolClass = getStateClass("school", currentSong.school);
+  const [isVideoReady, setIsVideoReady] = useState(false);
+
+  useEffect(() => {
+    setIsVideoReady(false);
+  }, [currentSong?.yt]);
 
   return (
     <section className={`watchPage surface ${schoolClass}`} data-surface="watch">
@@ -50,12 +56,19 @@ export default function WatchPage() {
               <div className="crt-scanlines" aria-hidden="true" />
               <div className="crt-phosphor" aria-hidden="true" />
 
-              <div className="videoFrame">
+              <div className={`videoFrame ${isVideoReady ? "is-ready" : "is-loading"}`}>
+                {!isVideoReady && (
+                  <div className="video-loading">
+                    <span className="loading-sigil" aria-hidden="true">⧗</span>
+                    <span className="loading-text">Summoning signal...</span>
+                  </div>
+                )}
                 <iframe
                   title={`YouTube player: ${currentSong.title}`}
                   src={`https://www.youtube.com/embed/${currentSong.yt}?autoplay=0&rel=0&modestbranding=1`}
                   allow="autoplay; encrypted-media; picture-in-picture"
                   allowFullScreen
+                  onLoad={() => setIsVideoReady(true)}
                 />
               </div>
             </div>

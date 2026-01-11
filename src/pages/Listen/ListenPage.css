@@ -465,6 +465,30 @@
   overflow: hidden;
 }
 
+.holo-panel.is-loading .holo-embed {
+  opacity: 0;
+}
+
+.holo-loading {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  gap: 8px;
+  font-family: var(--mono);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-size: 11px;
+  color: rgba(238, 240, 255, 0.7);
+  background: radial-gradient(circle at center, rgba(10, 10, 20, 0.7), rgba(10, 10, 20, 0.9));
+  z-index: 2;
+}
+
+.holo-loading .loading-sigil {
+  font-size: 18px;
+  animation: loading-spin 2s linear infinite;
+}
+
 @keyframes holo-shift {
   0%, 100% { background-position: 0% 50%; }
   50% { background-position: 100% 50%; }

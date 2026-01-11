@@ -1,19 +1,55 @@
 import { motion } from "framer-motion";
+import { useLayoutEffect, useRef, useState } from "react";
 import { getStateClass } from "../../js/stateClasses.js";
 
 export default function AnnotationPanel({ annotation, onClose }) {
   const vowelClass = getStateClass("vowelFamily", annotation?.vowelFamily);
+  const panelRef = useRef(null);
+  const resizeRef = useRef(null);
+  const [constraints, setConstraints] = useState(null);
+
+  useLayoutEffect(() => {
+    const updateConstraints = () => {
+      if (!panelRef.current) return;
+      const rect = panelRef.current.getBoundingClientRect();
+      const viewportWidth = window.innerWidth;
+      const viewportHeight = window.innerHeight;
+      const left = -rect.left;
+      const top = -rect.top;
+      const right = viewportWidth - (rect.left + rect.width);
+      const bottom = viewportHeight - (rect.top + rect.height);
+      setConstraints({ left, top, right, bottom });
+    };
+
+    updateConstraints();
+    const handleResize = () => {
+      requestAnimationFrame(updateConstraints);
+    };
+    window.addEventListener("resize", handleResize);
+    if (panelRef.current && window.ResizeObserver) {
+      resizeRef.current = new ResizeObserver(() => {
+        requestAnimationFrame(updateConstraints);
+      });
+      resizeRef.current.observe(panelRef.current);
+    }
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   return (
     <motion.aside
       className={`aside aside--grimoire surface annotation-panel ${vowelClass}`}
       data-surface="analysis"
       data-role="overlay"
-      initial={{ x: "100%", opacity: 0 }}
-      animate={{ x: 0, opacity: 1 }}
-      exit={{ x: "100%", opacity: 0 }}
+      initial={{ y: 18, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      exit={{ y: 18, opacity: 0 }}
       transition={{ type: "spring", damping: 22 }}
+      drag
+      dragConstraints={constraints || undefined}
+      dragMomentum={false}
+      dragElastic={0.12}
       aria-label="Word annotation panel"
+      ref={panelRef}
     >
       {/* Leather panel texture */}
       <div className="aside-texture" aria-hidden="true" />

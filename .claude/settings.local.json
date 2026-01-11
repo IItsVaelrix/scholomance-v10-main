@@ -4,7 +4,14 @@
       "Bash(xargs:*)",
       "Bash(wc:*)",
       "Bash(test:*)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(git remote add:*)",
+      "Bash(git push:*)",
+      "Bash(git remote set-url:*)",
+      "Bash(gh auth status:*)",
+      "Bash(npm run dev:*)",
+      "Bash(node:*)",
+      "Bash(git add:*)"
     ]
   }
 }
