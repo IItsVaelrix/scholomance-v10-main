@@ -1,4 +1,5 @@
 import type { EntityTag, EntityType, HiddenState, NodeType } from "../data/world.schema";
+import type { School } from "../engines/colorEngine/index.ts";
 
 export type ScrollInput = {
   id?: string;
@@ -28,6 +29,7 @@ export type WorldNode = {
   title: string;
   description: string;
   entities: string[];
+  chroma: WorldChroma;
 };
 
 export type WorldEntity = {
@@ -54,6 +56,22 @@ export type WorldEntity = {
     atk: number;
   };
   loot?: string[];
+  chroma?: WorldChroma;
+};
+
+export type WorldChroma = {
+  school: School;
+  cssVar: string;
+  className: string;
+  rgb: [number, number, number];
+  weight?: number;
+  blended?: boolean;
+};
+
+export type WorldPalette = {
+  scores: Record<School, number>;
+  dominant: WorldChroma;
+  blended: WorldChroma;
 };
 
 export type World = {
@@ -63,6 +81,7 @@ export type World = {
   edges: WorldEdge[];
   entitiesById: Record<string, WorldEntity>;
   startNodeId: string;
+  palette: WorldPalette;
 };
 
 export type WorldState = {

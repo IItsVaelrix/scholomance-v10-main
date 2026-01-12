@@ -1,7 +1,19 @@
 import { mulberry32, pick, int, chance } from "./rng";
 import { NODE_TYPES, ENTITY_TYPES } from "../data/world.schema";
+import { analyzeToken, blendSchoolColor, VOWEL_TO_SCHOOL } from "../engines/colorEngine/fastPass.ts";
+import { DESIGN_TOKENS } from "../engines/colorEngine/index.ts";
+import { STATE_CLASS_MAP } from "../js/stateClasses.js";
 import type { EntityType, NodeType } from "../data/world.schema";
-import type { ScrollInput, ScrollMetrics, World, WorldEntity, WorldNode } from "../types/scrollworld";
+import type { School } from "../engines/colorEngine/index.ts";
+import type {
+  ScrollInput,
+  ScrollMetrics,
+  World,
+  WorldChroma,
+  WorldEntity,
+  WorldNode,
+  WorldPalette,
+} from "../types/scrollworld";
 
 function id(prefix: string, n: number) {
   return `${prefix}_${n}`;
@@ -11,8 +23,93 @@ function clamp(n: number, a: number, b: number) {
   return Math.max(a, Math.min(b, n));
 }
 
+const SCHOOL_ORDER: School[] = ["VOID", "PSYCHIC", "ALCHEMY", "WILL", "SONIC"];
+const COLOR_TOKEN_LIMIT = 180;
+const COLOR_TOKEN_REGEX = /[A-Za-z']+/g;
+
+const BASE_COLOR_SCORES: Record<School, number> = {
+  VOID: 1,
+  PSYCHIC: 1,
+  ALCHEMY: 1,
+  WILL: 1,
+  SONIC: 1,
+};
+
+function extractColorTokens(scroll: ScrollInput) {
+  const source = `${scroll?.title || ""} ${scroll?.text || scroll?.content || ""}`;
+  return (source.match(COLOR_TOKEN_REGEX) || []).slice(0, COLOR_TOKEN_LIMIT);
+}
+
+function scoreColorSchools(scroll: ScrollInput, metrics: ScrollMetrics): Record<School, number> {
+  const scores: Record<School, number> = { ...BASE_COLOR_SCORES };
+  const tokens = extractColorTokens(scroll);
+  const volatilityWeight = Math.min(0.6, metrics.volatility * 1.5);
+  tokens.forEach((token, index) => {
+    const analysis = analyzeToken(token, null);
+    const school = VOWEL_TO_SCHOOL[analysis?.vowelFamily] || "VOID";
+    const phonemeWeight = Math.min(0.8, (analysis?.phonemes?.length || 0) * 0.08);
+    const codaWeight = analysis?.coda ? 0.2 : 0;
+    const positionWeight = index < 6 ? 0.45 : index < 18 ? 0.25 : 0.05;
+    const complexityWeight = Math.min(0.4, metrics.complexity / 350);
+    scores[school] += 1 + phonemeWeight + codaWeight + positionWeight + volatilityWeight + complexityWeight;
+  });
+  return scores;
+}
+
+function getDominantSchool(scores: Record<School, number>): School {
+  let dominant = SCHOOL_ORDER[0];
+  for (const school of SCHOOL_ORDER) {
+    if ((scores[school] || 0) > (scores[dominant] || 0)) {
+      dominant = school;
+    }
+  }
+  return dominant;
+}
+
+function buildChroma(
+  school: School,
+  weight: number,
+  rgbOverride?: [number, number, number],
+  blended = false
+): WorldChroma {
+  const token = DESIGN_TOKENS.schools[school] || DESIGN_TOKENS.schools.VOID;
+  const rgb = (rgbOverride || token.rgb) as [number, number, number];
+  return {
+    school,
+    cssVar: blended ? "--school-accent" : token.cssVar,
+    className: STATE_CLASS_MAP.school[school] || "",
+    rgb,
+    weight,
+    blended,
+  };
+}
+
+function buildWorldPalette(scroll: ScrollInput, metrics: ScrollMetrics): WorldPalette {
+  const scores = scoreColorSchools(scroll, metrics);
+  const dominantSchool = getDominantSchool(scores);
+  const blendedRgb = blendSchoolColor(scores) as [number, number, number];
+  const dominant = buildChroma(dominantSchool, scores[dominantSchool]);
+  const blended = buildChroma(
+    dominantSchool,
+    Math.max(...Object.values(scores)),
+    blendedRgb,
+    true
+  );
+  return { scores, dominant, blended };
+}
+
+function pickNodeChroma(index: number, palette: WorldPalette): WorldChroma {
+  if (index === 0) return { ...palette.blended };
+  if (index === 1) return { ...palette.dominant };
+  const sorted = [...SCHOOL_ORDER].sort((a, b) => (palette.scores[b] || 0) - (palette.scores[a] || 0));
+  const school = sorted[index % sorted.length] || palette.dominant.school;
+  const weight = palette.scores[school] || palette.dominant.weight || 1;
+  return buildChroma(school, weight);
+}
+
 export function generateWorldFromScroll(metrics: ScrollMetrics, scroll: ScrollInput): World {
   const rng = mulberry32(metrics.seed);
+  const palette = buildWorldPalette(scroll, metrics);
 
   const nodeCount = clamp(Math.floor(metrics.complexity / 35), 6, 60);
   const extraEdges = clamp(Math.floor(metrics.complexity / 90), 2, 40);
@@ -21,12 +118,14 @@ export function generateWorldFromScroll(metrics: ScrollMetrics, scroll: ScrollIn
   const nodes: WorldNode[] = [];
   for (let i = 0; i < nodeCount; i++) {
     const type: NodeType = i === 0 ? "HUB" : pick(rng, NODE_TYPES);
+    const chroma = pickNodeChroma(i, palette);
     nodes.push({
       id: id("N", i),
       type,
       title: nodeTitle(rng, type, scroll),
       description: nodeDescription(rng, type),
       entities: [],
+      chroma,
     });
   }
 
@@ -48,14 +147,24 @@ export function generateWorldFromScroll(metrics: ScrollMetrics, scroll: ScrollIn
     const node = pick(rng, nodes);
     const kind: EntityType = pick(rng, ENTITY_TYPES);
 
-    const ent = makeEntity(rng, kind, scroll, metrics, node.type, allocId, entityBudget - entities.length, 0);
+    const ent = makeEntity(
+      rng,
+      kind,
+      scroll,
+      metrics,
+      node.type,
+      node.chroma,
+      allocId,
+      entityBudget - entities.length,
+      0
+    );
     const created = collectEntities(ent);
     for (const createdEntity of created) entities.push(createdEntity);
     node.entities.push(ent.id);
   }
 
   const arena = nodes.find((n) => n.type === "ARENA") || nodes[nodes.length - 1];
-  const boss = makeMonster(rng, scroll, metrics, "BOSS", allocId("M"));
+  const boss = makeMonster(rng, scroll, metrics, "BOSS", allocId("M"), arena.chroma);
   entities.push(boss);
   arena.entities.push(boss.id);
 
@@ -66,6 +175,7 @@ export function generateWorldFromScroll(metrics: ScrollMetrics, scroll: ScrollIn
     edges,
     entitiesById: Object.fromEntries(entities.map((x) => [x.id, x])),
     startNodeId: nodes[0].id,
+    palette,
   };
 }
 
@@ -99,13 +209,21 @@ function makeEntity(
   scroll: ScrollInput,
   metrics: ScrollMetrics,
   nodeType: NodeType,
+  chroma: WorldChroma,
   allocId: (prefix: string) => string,
   budgetRemaining: number,
   depth: number
 ): WorldEntity {
   switch (kind) {
     case "MONSTER":
-      return makeMonster(rng, scroll, metrics, nodeType === "ARENA" ? "ELITE" : "COMMON", allocId("M"));
+      return makeMonster(
+        rng,
+        scroll,
+        metrics,
+        nodeType === "ARENA" ? "ELITE" : "COMMON",
+        allocId("M"),
+        chroma
+      );
     case "ITEM":
       return makeContainerEntity(
         {
@@ -124,10 +242,12 @@ function makeEntity(
           },
           consumedOnUse: chance(rng, 0.6),
           hiddenState: "visible",
+          chroma,
         },
         rng,
         scroll,
         metrics,
+        chroma,
         allocId,
         budgetRemaining,
         depth
@@ -149,6 +269,7 @@ function makeEntity(
           "The monsters are just contradictions with teeth.",
         ]),
         hiddenState: "visible",
+        chroma,
       };
     case "DOOR":
       return {
@@ -165,6 +286,7 @@ function makeEntity(
         keyHint: pick(rng, ["Key Sigil", "Mirror Token", "Phoneme Shard"]),
         hiddenState: chance(rng, 0.7) ? "locked" : "obscured",
         contents: [],
+        chroma,
       };
     case "CLUE":
     default:
@@ -176,6 +298,7 @@ function makeEntity(
         text: clueText(rng, scroll, metrics),
         tags: ["readable", "hidden"],
         hiddenState: chance(rng, 0.4) ? "obscured" : "visible",
+        chroma,
       };
   }
 }
@@ -191,7 +314,8 @@ function makeMonster(
   scroll: ScrollInput,
   metrics: ScrollMetrics,
   rank: "COMMON" | "ELITE" | "BOSS",
-  idValue: string
+  idValue: string,
+  chroma: WorldChroma
 ): WorldEntity {
   const base = 10 + Math.floor(metrics.uniqueCount / 8);
   const rankMult = rank === "BOSS" ? 6 : rank === "ELITE" ? 2.5 : 1;
@@ -215,6 +339,7 @@ function makeMonster(
     tags: [],
     description: "A creature assembled from punctuation and appetite.",
     hiddenState: "visible",
+    chroma,
   };
 }
 
@@ -231,6 +356,7 @@ function makeContainerEntity(
   rng: () => number,
   scroll: ScrollInput,
   metrics: ScrollMetrics,
+  chroma: WorldChroma,
   allocId: (prefix: string) => string,
   budgetRemaining: number,
   depth: number
@@ -243,7 +369,17 @@ function makeContainerEntity(
   const contents = [];
   for (let i = 0; i < childCount; i++) {
     const kind: EntityType = pick(rng, ENTITY_TYPES);
-    const child = makeEntity(rng, kind, scroll, metrics, "ROOM", allocId, budgetRemaining - 1, depth + 1);
+    const child = makeEntity(
+      rng,
+      kind,
+      scroll,
+      metrics,
+      "ROOM",
+      chroma,
+      allocId,
+      budgetRemaining - 1,
+      depth + 1
+    );
     contents.push(child);
   }
 
