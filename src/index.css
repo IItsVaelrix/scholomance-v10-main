@@ -481,7 +481,6 @@ body::after {
 @media (prefers-reduced-motion: reduce) {
   body::before { animation: none; }
 
-  .candle-ambience,
   .led-pulse,
   .nixie-digit,
   .gold-shimmer,

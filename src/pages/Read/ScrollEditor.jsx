@@ -155,12 +155,9 @@ export default function ScrollEditor({
   const [isSaving, setIsSaving] = useState(false);
   const [validationError, setValidationError] = useState(null);
   const editorRef = useRef(null);
-  const prevLengthRef = useRef(initialContent.length);
-  const effectTimeoutRef = useRef(null);
   const renderTimeoutRef = useRef(null);
   const caretRef = useRef(null);
   const isComposingRef = useRef(false);
-  const [inkEffect, setInkEffect] = useState(null);
   const [renderedContent, setRenderedContent] = useState(() =>
     buildEditorMarkup(initialContent, [])
   );
@@ -168,7 +165,6 @@ export default function ScrollEditor({
   useEffect(() => {
     setTitle(initialTitle);
     setContent(initialContent);
-    prevLengthRef.current = initialContent.length;
   }, [initialTitle, initialContent]);
 
   useEffect(() => {
@@ -179,9 +175,6 @@ export default function ScrollEditor({
 
   useEffect(() => {
     return () => {
-      if (effectTimeoutRef.current) {
-        clearTimeout(effectTimeoutRef.current);
-      }
       if (renderTimeoutRef.current) {
         clearTimeout(renderTimeoutRef.current);
       }
@@ -263,26 +256,11 @@ export default function ScrollEditor({
   const isOverLimit = charCount > SCROLL_LIMITS.content;
   const remaining = SCROLL_LIMITS.content - charCount;
 
-  const triggerInkEffect = (type) => {
-    setInkEffect(type);
-    if (effectTimeoutRef.current) {
-      clearTimeout(effectTimeoutRef.current);
-    }
-    effectTimeoutRef.current = setTimeout(() => setInkEffect(null), 240);
-  };
-
   const handleContentChange = (value) => {
-    const prevLength = prevLengthRef.current;
     const nextValue =
       value.length > SCROLL_LIMITS.content ? value.slice(0, SCROLL_LIMITS.content) : value;
     setContent(nextValue);
     onContentChange?.(nextValue);
-    if (nextValue.length > prevLength) {
-      triggerInkEffect("ink");
-    } else if (nextValue.length < prevLength) {
-      triggerInkEffect("ash");
-    }
-    prevLengthRef.current = nextValue.length;
   };
 
   const handleInput = (event) => {
@@ -323,9 +301,7 @@ export default function ScrollEditor({
 
   return (
     <motion.div
-      className={`scroll-editor surface ${content.trim() ? "has-text" : "is-empty"} ${
-        inkEffect ? `ink-${inkEffect}` : ""
-      }`}
+      className={`scroll-editor surface ${content.trim() ? "has-text" : "is-empty"}`}
       data-surface="editor"
       data-role="editor"
       initial={{ opacity: 0, y: 10 }}

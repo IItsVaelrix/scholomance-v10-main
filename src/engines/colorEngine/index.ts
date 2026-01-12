@@ -116,6 +116,7 @@ export type ColorEngineInternal = ColorEngine & {
 };
 
 export const ENGINE_VERSION = "color-engine@1";
+const ENRICHMENT_TOKEN_LIMIT = 400;
 
 export const COLOR_SCHEMA = {
   classes: {
@@ -225,6 +226,7 @@ export const createColorEngine = (options: ColorEngineOptions = {}): ColorEngine
   let phonemeEngine = options.phonemeEngine || null;
   const fastCache = new Map<string, SyntacticResult>();
   const enrichedCache = new Map<string, EnrichmentRecord>();
+  const pending = new Set<string>();
   const inFlight = new Map<string, Promise<void>>();
   const queue: Array<{ token: string; resolve: () => void }> = [];
   let activeRequests = 0;
@@ -298,6 +300,7 @@ export const createColorEngine = (options: ColorEngineOptions = {}): ColorEngine
         .finally(() => {
           activeRequests -= 1;
           inFlight.delete(entry.token);
+          pending.delete(entry.token);
           entry.resolve();
           if (queue.length) schedulePump();
         });
@@ -319,8 +322,10 @@ export const createColorEngine = (options: ColorEngineOptions = {}): ColorEngine
     if (cached) return Promise.resolve();
     const existing = inFlight.get(token);
     if (existing) return existing;
+    if (pending.has(token)) return Promise.resolve();
 
     const promise = new Promise<void>((resolve) => {
+      pending.add(token);
       queue.push({ token, resolve });
       schedulePump();
     });
@@ -331,9 +336,15 @@ export const createColorEngine = (options: ColorEngineOptions = {}): ColorEngine
   const decorateText = (text: string) => {
     try {
       const tokens = tokenizeText(text);
+      const shouldEnrich =
+        tokens.length > 0 && tokens.length <= ENRICHMENT_TOKEN_LIMIT && isEnrichmentEnabled();
+      const seen = shouldEnrich ? new Set<string>() : null;
       const decorations = tokens.map((token) => {
         const result = getTokenResult(token.normalized);
-        void requestEnrichment(token.normalized);
+        if (shouldEnrich && seen && !seen.has(token.normalized)) {
+          seen.add(token.normalized);
+          void requestEnrichment(token.normalized);
+        }
         return {
           start: token.start,
           end: token.end,
@@ -352,6 +363,7 @@ export const createColorEngine = (options: ColorEngineOptions = {}): ColorEngine
     fastCache.clear();
     enrichedCache.clear();
     inFlight.clear();
+    pending.clear();
     queue.length = 0;
   };
 
@@ -360,6 +372,7 @@ export const createColorEngine = (options: ColorEngineOptions = {}): ColorEngine
     fastCache.clear();
     enrichedCache.clear();
     inFlight.clear();
+    pending.clear();
     queue.length = 0;
     if (notifyTimer) clearTimeout(notifyTimer);
     if (pumpTimer) clearTimeout(pumpTimer);

@@ -23,10 +23,6 @@
   --gold-bright: #7de3ff;
   --gold-dark: #2a7da7;
 
-  /* Ambient glow */
-  --candle-glow: rgba(124, 208, 255, 0.14);
-  --candle-warm: #a4d9ff;
-
   /* Typography */
   --serif: "Cormorant Garamond", "Times New Roman", serif;
 }
@@ -42,35 +38,6 @@
   --rhyme-soft: var(--school-accent-soft);
   --gold-bright: var(--school-accent);
   --gold-dark: var(--school-accent);
-}
-
-/* Candlelight ambient glow */
-.candle-ambience {
-  position: fixed;
-  top: 15%;
-  right: 8%;
-  width: 500px;
-  height: 500px;
-  background: radial-gradient(circle, var(--candle-glow) 0%, transparent 70%);
-  pointer-events: none;
-  animation: candle-flicker 3s ease-in-out infinite;
-  z-index: var(--z-base);
-}
-
-.candle-ambience--secondary {
-  top: 60%;
-  left: 5%;
-  right: auto;
-  width: 400px;
-  height: 400px;
-  animation-delay: 1.2s;
-}
-
-@keyframes candle-flicker {
-  0%, 100% { opacity: 0.6; }
-  25% { opacity: 0.5; }
-  50% { opacity: 0.7; }
-  75% { opacity: 0.55; }
 }
 
 /* Layout - Full page editor */
@@ -640,36 +607,6 @@
 }
 
 
-.scroll-editor.ink-ink .editor-content {
-  animation: ink-brand 0.28s ease-out;
-  text-shadow: 0 0 10px rgba(125, 200, 255, 0.25);
-}
-
-.scroll-editor.ink-ash .editor-body {
-  /* Simplified ash effect - you may want to remove this too */
-  animation: ash-drift 0.4s ease-out;
-}
-
-@keyframes ink-brand {
-  0% {
-    text-shadow: 0 0 0 rgba(255, 180, 80, 0);
-    color: var(--ink-black);
-  }
-  30% {
-    text-shadow: 0 0 12px rgba(125, 200, 255, 0.6), 0 0 6px rgba(125, 200, 255, 0.35);
-    color: #f8fbff;
-  }
-  100% {
-    text-shadow: 0 0 3px rgba(125, 200, 255, 0.2);
-    color: var(--ink-black);
-  }
-}
-
-@keyframes ash-drift {
-  0% { opacity: 0; transform: translateY(0) scale(1); }
-  20% { opacity: 0.8; }
-  100% { opacity: 0; transform: translateY(-30px) scale(1.2); }
-}
 
 .editor-footer {
   display: flex;
