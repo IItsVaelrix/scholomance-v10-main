@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useCallback } from "react";
 
 export default function GrimoireScroll({
   text,
@@ -7,12 +7,22 @@ export default function GrimoireScroll({
   onAnalyzeEthereal,
   isEngineReady,
 }) {
+  const handleKeyDown = useCallback((e, word) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      const clean = word.replace(/[^A-Za-z']/g, "");
+      if (clean && !disabled) {
+        onWordClick?.(clean);
+      }
+    }
+  }, [disabled, onWordClick]);
+
   const renderWords = useMemo(() => {
     const parts = text.split(/(\s+)/);
     return parts.map((p, i) => {
       if (/^\s+$/.test(p)) {
         return (
-          <span key={i} className="grimoire-space">
+          <span key={i} className="grimoire-space" aria-hidden="true">
             {p}
           </span>
         );
@@ -24,16 +34,19 @@ export default function GrimoireScroll({
           className="grimoire-word"
           disabled={disabled || !clean}
           onClick={() => onWordClick?.(clean)}
+          onKeyDown={(e) => handleKeyDown(e, clean)}
+          aria-label={`Analyze word: ${clean}`}
+          aria-disabled={disabled || !clean}
           title={disabled ? "Awakening the engine..." : "Analyze this word"}
         >
           {p}
         </button>
       );
     });
-  }, [text, disabled, onWordClick]);
+  }, [text, disabled, onWordClick, handleKeyDown]);
 
   return (
-    <div className="grimoire-cover">
+    <div className="grimoire-cover" role="document">
       {/* Leather texture overlay */}
       <div className="leather-texture" aria-hidden="true" />
 
@@ -80,8 +93,8 @@ export default function GrimoireScroll({
         </div>
 
         {/* Scroll text content */}
-        <div className="grimoire-text">
-          <span className="drop-cap">E</span>
+        <div className="grimoire-text" aria-label="Scroll content">
+          <span className="drop-cap" aria-hidden="true">E</span>
           {renderWords}
         </div>
 
@@ -94,6 +107,9 @@ export default function GrimoireScroll({
             className="grimoire-button"
             onClick={onAnalyzeEthereal}
             disabled={!isEngineReady}
+            aria-label={isEngineReady 
+              ? "Analyze all words in scroll" 
+              : "Phoneme engine initializing"}
           >
             {isEngineReady ? (
               <>

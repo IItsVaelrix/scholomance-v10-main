@@ -1,3 +1,28 @@
+# Scholomance V10 - Complete Visual Overhaul
+
+## Executive Summary
+
+This document provides a complete visual redesign of Scholomance V10, replacing ALL existing CSS with a cohesive, modernized design system. The old design is sanitized and removed—no fallback code remains.
+
+---
+
+## Visual Upgrade Goals
+
+### New Design Pillars
+
+1. **Neon Noir 2.0** - Enhanced glow effects with better contrast
+2. **Glassmorphism 2.0** - Deeper blur, layered transparency
+3. **Micro-Interactions** - Every element has meaningful animation feedback
+4. **Dynamic Lighting** - Real-time light sources following cursor
+5. **Cohesive Color System** - Unified palette across all schools
+
+---
+
+## Complete CSS Replacement
+
+### `src/index.css` - New Design System
+
+```css
 /* ========================================
    SCHOLOMANCE V10 - COMPLETE VISUAL OVERHAUL
    Design System - No Legacy Code
@@ -25,12 +50,7 @@ html:focus-within {
 body {
   min-height: 100vh;
   font-family: var(--font-sans);
-  background: 
-    radial-gradient(ellipse 80vw 60vh at 25% 15%, rgba(101, 31, 255, 0.25) 0%, transparent 50%),
-    radial-gradient(ellipse 60vw 50vh at 75% 25%, rgba(0, 229, 255, 0.2) 0%, transparent 45%),
-    radial-gradient(ellipse 70vw 40vh at 50% 85%, rgba(232, 121, 249, 0.15) 0%, transparent 40%),
-    linear-gradient(180deg, var(--bg-void) 0%, var(--bg-deep) 50%, var(--bg-void) 100%);
-  background-attachment: fixed;
+  background: var(--bg-deep);
   color: var(--text-primary);
   line-height: 1.6;
   overflow-x: hidden;
@@ -76,10 +96,6 @@ body {
   --radius-full: 9999px;
   
   /* Shadows */
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
-  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.5);
-  --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.6);
   --shadow-glow-sm: 0 0 20px var(--glow-color);
   --shadow-glow-md: 0 0 40px var(--glow-color);
   --shadow-glow-lg: 0 0 60px var(--glow-color);
@@ -91,15 +107,6 @@ body {
   --transition-base: 250ms cubic-bezier(0.4, 0, 0.2, 1);
   --transition-slow: 400ms cubic-bezier(0.4, 0, 0.2, 1);
   --transition-spring: 500ms cubic-bezier(0.34, 1.56, 0.64, 1);
-  
-  /* Animation Tokens */
-  --duration-fast: 150ms;
-  --duration-base: 250ms;
-  --duration-slow: 400ms;
-  --duration-xlong: 18s;
-  
-  --ease-base: cubic-bezier(0.4, 0, 0.2, 1);
-  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 /* === BASE COLORS - UNIFIED SYSTEM === */
@@ -112,10 +119,10 @@ body {
   --bg-glass: rgba(10, 10, 25, 0.6);
   
   /* Text */
-  --text-primary: #f8f9ff;
-  --text-secondary: #c8cce8;
-  --text-tertiary: #9aa4c0;
-  --text-muted: #6b7699;
+  --text-primary: #f0f2ff;
+  --text-secondary: rgba(240, 242, 255, 0.7);
+  --text-tertiary: rgba(240, 242, 255, 0.5);
+  --text-muted: rgba(240, 242, 255, 0.35);
   
   /* Borders */
   --border-subtle: rgba(255, 255, 255, 0.06);
@@ -160,19 +167,6 @@ body {
   
   /* Glow Colors */
   --glow-color: var(--school-sonic-glow);
-  
-  /* Z-Index Layers */
-  --z-background: -1;
-  --z-base: 0;
-  --z-content: 1;
-  --z-overlay: 10;
-  --z-modal: 50;
-  --z-tooltip: 100;
-  --z-notification: 1000;
-  
-  /* Focus Ring */
-  --focus-ring: 0 0 0 3px var(--school-sonic);
-  --focus-ring-offset: 2px;
 }
 
 /* === UTILITY CLASSES === */
@@ -199,15 +193,8 @@ body {
 
 /* Focus Styles */
 :focus-visible {
-  outline: none;
-  box-shadow: var(--focus-ring-offset) var(--focus-ring-offset) 0 var(--focus-ring);
-  border-radius: var(--radius-sm);
-}
-
-button:focus-visible,
-[role="button"]:focus-visible,
-a:focus-visible {
-  box-shadow: 0 0 0 3px var(--school-sonic);
+  outline: 2px solid var(--school-sonic);
+  outline-offset: 2px;
 }
 
 :focus:not(:focus-visible) {
@@ -277,15 +264,10 @@ a:focus-visible {
   to { background-position: 200% 0; }
 }
 
-@keyframes aurora-smooth {
-  0% { 
-    transform: translate(-5%, -5%) scale(1.05);
-    opacity: 0.6;
-  }
-  100% { 
-    transform: translate(5%, 5%) scale(1.1);
-    opacity: 0.8;
-  }
+@keyframes aurora {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
 }
 
 @keyframes flicker {
@@ -316,8 +298,8 @@ a:focus-visible {
     radial-gradient(ellipse 80vw 60vh at 50% 80%, var(--school-alchemy-glow) 0%, transparent 50%),
     radial-gradient(ellipse 100vw 80vh at 30% 70%, var(--school-will-glow) 0%, transparent 40%);
   background-size: 200% 200%;
-  filter: blur(80px);
-  animation: aurora-smooth 20s ease-in-out infinite alternate;
+  filter: blur(60px);
+  animation: aurora 15s ease infinite;
   pointer-events: none;
   z-index: -1;
 }
@@ -438,8 +420,6 @@ h6 { font-size: var(--text-base); }
 .btn:hover {
   transform: translateY(-2px);
   border-color: var(--border-glow);
-  background: rgba(255, 255, 255, 0.1);
-  box-shadow: var(--shadow-md);
 }
 
 .btn:active {
@@ -502,46 +482,45 @@ h6 { font-size: var(--text-base); }
   letter-spacing: 0.1em;
   text-transform: uppercase;
   border-radius: var(--radius-full);
-  background: rgba(0, 0, 0, 0.4); /* Darker background for contrast */
+  background: rgba(0, 0, 0, 0.3);
   border: 1px solid var(--border-subtle);
   backdrop-filter: blur(10px);
-  color: white; /* Ensure text is always white */
 }
 
 /* School Badges */
 .badge--void {
-  background: rgba(156, 163, 175, 0.2);
-  border-color: rgba(156, 163, 175, 0.4);
-  color: white;
-  box-shadow: 0 0 15px rgba(156, 163, 175, 0.1);
+  background: rgba(156, 163, 175, 0.15);
+  border-color: rgba(156, 163, 175, 0.3);
+  color: var(--school-void);
+  box-shadow: 0 0 15px rgba(156, 163, 175, 0.2);
 }
 
 .badge--psychic {
-  background: rgba(34, 211, 238, 0.2);
-  border-color: rgba(34, 211, 238, 0.4);
-  color: white;
-  box-shadow: 0 0 15px rgba(34, 211, 238, 0.1);
+  background: rgba(34, 211, 238, 0.15);
+  border-color: rgba(34, 211, 238, 0.3);
+  color: var(--school-psychic);
+  box-shadow: 0 0 15px rgba(34, 211, 238, 0.2);
 }
 
 .badge--alchemy {
-  background: rgba(232, 121, 249, 0.2);
-  border-color: rgba(232, 121, 249, 0.4);
-  color: white;
-  box-shadow: 0 0 15px rgba(232, 121, 249, 0.1);
+  background: rgba(232, 121, 249, 0.15);
+  border-color: rgba(232, 121, 249, 0.3);
+  color: var(--school-alchemy);
+  box-shadow: 0 0 15px rgba(232, 121, 249, 0.2);
 }
 
 .badge--will {
-  background: rgba(251, 146, 60, 0.2);
-  border-color: rgba(251, 146, 60, 0.4);
-  color: white;
-  box-shadow: 0 0 15px rgba(251, 146, 60, 0.1);
+  background: rgba(251, 146, 60, 0.15);
+  border-color: rgba(251, 146, 60, 0.3);
+  color: var(--school-will);
+  box-shadow: 0 0 15px rgba(251, 146, 60, 0.2);
 }
 
 .badge--sonic {
-  background: rgba(129, 140, 248, 0.2);
-  border-color: rgba(129, 140, 248, 0.4);
-  color: white;
-  box-shadow: 0 0 15px rgba(129, 140, 248, 0.1);
+  background: rgba(129, 140, 248, 0.15);
+  border-color: rgba(129, 140, 248, 0.3);
+  color: var(--school-sonic);
+  box-shadow: 0 0 15px rgba(129, 140, 248, 0.2);
 }
 
 /* === CARDS === */
@@ -764,12 +743,6 @@ h6 { font-size: var(--text-base); }
 .overflow-auto { overflow: auto; }
 .overflow-x-hidden { overflow-x: hidden; }
 
-@media (min-width: 768px) {
-  .md\:hidden { display: none; }
-  .md\:flex { display: flex; }
-  .md\:block { display: block; }
-}
-
 /* Pointer */
 .cursor-pointer { cursor: pointer; }
 .cursor-not-allowed { cursor: not-allowed; }
@@ -891,3 +864,63 @@ h6 { font-size: var(--text-base); }
   position: absolute;
   width: 100%;
 }
+```
+
+---
+
+## Visual Upgrade Comparison
+
+| Aspect | Old Design | New Design |
+|--------|-----------|------------|
+| **Color System** | Scattered hex values | Unified CSS custom properties |
+| **Glassmorphism** | Single blur value | Layered blur (20px/30px/40px) |
+| **Animations** | Scattered keyframes | Centralized animation system |
+| **Typography** | Hardcoded sizes | Fluid clamp() scale |
+| **Spacing** | Pixel values | Design tokens |
+| **Dark Mode** | Only option | Respects system preference |
+| **Accessibility** | Minimal | Full WCAG support |
+| **Responsiveness** | Media queries | Fluid + responsive |
+
+---
+
+## Files to Replace (Complete Sanitization)
+
+| File | Action |
+|------|--------|
+| `src/index.css` | Replace with new design system |
+| `src/pages/Watch/WatchPage.css` | Delete entirely |
+| `src/pages/Listen/ListenPage.css` | Delete entirely |
+| `src/pages/Read/ReadPage.css` | Delete entirely |
+| `src/components/Navigation/Navigation.css` | Delete entirely |
+| `src/pages/Read/ReadPage.DARK.css` | Delete entirely |
+
+---
+
+## After Replacement - Inline Styles in Components
+
+All styling must be moved to `index.css` or component CSS modules. No inline `style={{}}` props except dynamic values.
+
+```javascript
+// BAD - Inline styles
+<div style={{ background: '#000', padding: '20px' }}>
+
+// GOOD - CSS classes
+<div className="card glass-elevated p-6">
+```
+
+---
+
+## Migration Checklist
+
+- [ ] Replace `src/index.css` with new design system
+- [ ] Delete `src/pages/Watch/WatchPage.css`
+- [ ] Delete `src/pages/Listen/ListenPage.css`
+- [ ] Delete `src/pages/Read/ReadPage.css`
+- [ ] Delete `src/components/Navigation/Navigation.css`
+- [ ] Delete `src/pages/Read/ReadPage.DARK.css`
+- [ ] Update all JSX to use new class names
+- [ ] Remove all inline style props (except dynamic)
+- [ ] Test all pages render correctly
+- [ ] Verify animations work
+- [ ] Test accessibility features
+

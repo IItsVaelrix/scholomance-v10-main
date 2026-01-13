@@ -1,3 +1,5 @@
+import { SCHOOLS, generateSchoolColor } from "./schools";
+
 // Shared data constants for Scholomance
 
 export const LIBRARY = {
@@ -39,21 +41,17 @@ export const LINKS = [
   { id: "read", path: "/read", label: "Read" },
 ];
 
-export const COLORS = {
-  VOID: "#a1a1aa",
-  PSYCHIC: "#00E5FF",
-  ALCHEMY: "#D500F9",
-  WILL: "#FF8A00",
-  SONIC: "#651FFF",
-};
+// Dynamically generate COLORS from SCHOOLS source of truth
+export const COLORS = Object.keys(SCHOOLS).reduce((acc, schoolId) => {
+  acc[schoolId] = generateSchoolColor(schoolId);
+  return acc;
+}, {});
 
-export const SCHOOL_ANGLES = {
-  VOID: 0,
-  PSYCHIC: 72,
-  ALCHEMY: 144,
-  WILL: 216,
-  SONIC: 288,
-};
+// Dynamically generate ANGLES from SCHOOLS source of truth
+export const SCHOOL_ANGLES = Object.values(SCHOOLS).reduce((acc, school) => {
+  acc[school.id] = school.angle;
+  return acc;
+}, {});
 
 export function schoolToBadgeClass(school) {
   return `badge--${String(school || "").toLowerCase()}`;

@@ -1,5 +1,5 @@
 import { motion, useAnimation } from "framer-motion";
-import { useEffect } from "react";
+import { useEffect, useCallback } from "react";
 
 export default function BrassGearDial({ school, onTune, disabled, angle }) {
   const controls = useAnimation();
@@ -16,8 +16,26 @@ export default function BrassGearDial({ school, onTune, disabled, angle }) {
     onTune?.();
   };
 
+  const handleKeyDown = useCallback((e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      if (!disabled) {
+        onTune?.();
+      }
+    }
+  }, [disabled, onTune]);
+
   return (
-    <div className="brass-dial-container">
+    <div 
+      className="brass-dial-container"
+      role="slider"
+      aria-label={`Frequency dial: ${school} school`}
+      aria-valuenow={angle}
+      aria-valuemin={0}
+      aria-valuemax={360}
+      tabIndex={disabled ? -1 : 0}
+      onKeyDown={handleKeyDown}
+    >
       {/* Outer gear ring */}
       <div className="gear-ring">
         {Array.from({ length: 24 }).map((_, i) => (
@@ -34,15 +52,6 @@ export default function BrassGearDial({ school, onTune, disabled, angle }) {
         className="brass-dial"
         animate={controls}
         onClick={handleClick}
-        role="button"
-        tabIndex={0}
-        aria-label={`Tune to ${school} frequency`}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" || e.key === " ") {
-            e.preventDefault();
-            handleClick();
-          }
-        }}
       >
         {/* Dial face engravings */}
         <div className="dial-engravings">

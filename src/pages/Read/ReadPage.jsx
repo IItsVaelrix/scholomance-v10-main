@@ -1,7 +1,9 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { AnimatePresence } from "framer-motion";
 import { usePhonemeEngine } from "../../hooks/usePhonemeEngine.jsx";
 import { useScrolls } from "../../hooks/useScrolls.jsx";
+import { useProgression } from "../../hooks/useProgression.jsx";
+import { XP_SOURCES } from "../../data/progression_constants.js";
 import GrimoireScroll from "./GrimoireScroll.jsx";
 import AnnotationPanel from "./AnnotationPanel.jsx";
 import ScrollEditor from "./ScrollEditor.jsx";
@@ -10,14 +12,30 @@ import "./ReadPage.css";
 
 export default function ReadPage() {
   const { isReady, engine } = usePhonemeEngine();
-  const { scrolls, createScroll, updateScroll, deleteScroll, getScrollById } = useScrolls();
+  const { scrolls, createScroll, updateScroll, deleteScroll, getScrollById } =
+    useScrolls();
+  const { addXP } = useProgression(); // NEW
 
   const [annotation, setAnnotation] = useState(null);
   const [activeScrollId, setActiveScrollId] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [viewMode, setViewMode] = useState("editor"); // "editor" | "viewer"
+  const [announcement, setAnnouncement] = useState(""); // NEW: For screen readers
 
   const activeScroll = activeScrollId ? getScrollById(activeScrollId) : null;
+
+  // Create announcement when annotation changes
+  useEffect(() => {
+    if (annotation) {
+      setAnnouncement(
+        `${annotation.word}: ${annotation.vowelFamily} vowel family, ` +
+        `${annotation.phonemes.length} phonemes, ` +
+        `rhyme key ${annotation.rhymeKey}`
+      );
+    } else {
+      setAnnouncement("");
+    }
+  }, [annotation]);
 
   const analyze = useCallback(
     (word) => {
@@ -31,11 +49,14 @@ export default function ReadPage() {
         setAnnotation({
           word: clean,
           ...result,
-          rhymeKey: result.rhymeKey ?? `${result.vowelFamily}-${result.coda ?? ""}`,
+          rhymeKey:
+            result.rhymeKey ?? `${result.vowelFamily}-${result.coda ?? ""}`,
         });
+        // Award XP for word analysis - NEW
+        addXP(XP_SOURCES.WORD_ANALYZED, "word-analysis");
       }
     },
-    [engine]
+    [engine, addXP]
   );
 
   const handleSaveScroll = useCallback(
@@ -48,9 +69,11 @@ export default function ReadPage() {
         const newScroll = createScroll(title, content);
         setActiveScrollId(newScroll.id);
         setViewMode("viewer");
+        // Award XP for creating scroll - NEW
+        addXP(XP_SOURCES.SCROLL_CREATED, "scroll-creation");
       }
     },
-    [isEditing, activeScrollId, updateScroll, createScroll]
+    [isEditing, activeScrollId, updateScroll, createScroll, addXP]
   );
 
   const handleSelectScroll = useCallback((id) => {
@@ -93,18 +116,22 @@ export default function ReadPage() {
   }, [activeScrollId]);
 
   return (
-    <section className="readPage">
-      {/* Ambient candlelight */}
-      <div className="candle-ambience" aria-hidden="true" />
-      <div className="candle-ambience candle-ambience--secondary" aria-hidden="true" />
+    <section className="readPage page-theme--read">
+      {/* Live region for screen reader announcements */}
+      <div 
+        role="status" 
+        aria-live="polite" 
+        aria-atomic="true"
+        className="sr-only"
+      >
+        {announcement}
+      </div>
 
       <div className="container">
-        <header className="sectionHeader grimoire-header">
+        <header className="grimoire-header">
           <div className="kicker">The Arcane Codex</div>
-          <h1 className="title grimoire-title">
-            <span className="illuminated-letter">S</span>cribe &amp; Analyze
-          </h1>
-          <p className="subtitle grimoire-subtitle">
+          <h1 className="grimoire-title">Scribe &amp; Analyze</h1>
+          <p className="grimoire-subtitle">
             Inscribe thy verses upon sacred scrolls. Each word becomes a portal —
             click to unveil its vowel-family, phonemes, and rhyme key.
           </p>
@@ -136,15 +163,15 @@ export default function ReadPage() {
                   disabled={!isReady}
                 />
               ) : activeScroll ? (
-                <div key={`view-${activeScrollId}`} className="scroll-viewer">
-                  <div className="viewer-header">
-                    <h2 className="viewer-title">{activeScroll.title}</h2>
+                <div key={`view-${activeScrollId}`} className="flex flex-col gap-6 h-full animate-fadeIn">
+                  <div className="flex items-center justify-between glass p-6 rounded-xl border-soft">
+                    <h2 className="text-2xl font-bold text-primary">{activeScroll.title}</h2>
                     <button
                       type="button"
-                      className="viewer-edit-btn"
+                      className="btn btn-secondary"
                       onClick={handleEditScroll}
                     >
-                      <span>&#x270E;</span> Edit
+                      Edit
                     </button>
                   </div>
                   <GrimoireScroll
@@ -159,16 +186,15 @@ export default function ReadPage() {
                   />
                 </div>
               ) : (
-                <div className="scroll-placeholder">
-                  <div className="placeholder-sigil">&#x1F4DC;</div>
-                  <h3>Select or Create a Scroll</h3>
-                  <p>Choose a scroll from the list or start a new inscription.</p>
+                <div className="scroll-placeholder animate-scaleIn">
+                  <div className="placeholder-sigil">📜</div>
+                  <h3 className="text-2xl font-bold mb-4">Select or Create a Scroll</h3>
+                  <p className="mb-8">Choose a scroll from the list or start a new inscription.</p>
                   <button
                     type="button"
-                    className="grimoire-button"
+                    className="btn btn-primary"
                     onClick={handleNewScroll}
                   >
-                    <span className="button-sigil">&#x271A;</span>
                     Begin New Scroll
                   </button>
                 </div>

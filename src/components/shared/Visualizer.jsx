@@ -4,7 +4,7 @@ export default function Visualizer({ color, active }) {
   if (!active) return null;
 
   return (
-    <div className="visualizer">
+    <div className="visualizer" aria-hidden="true">
       {Array.from({ length: 14 }).map((_, i) => (
         <motion.div
           key={i}

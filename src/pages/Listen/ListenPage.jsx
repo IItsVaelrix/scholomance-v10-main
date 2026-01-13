@@ -1,28 +1,39 @@
 import { useState, useMemo } from "react";
 import { motion, useAnimation } from "framer-motion";
 import { useCurrentSong } from "../../hooks/useCurrentSong.jsx";
-import { COLORS, SCHOOL_ANGLES, LIBRARY } from "../../data/library";
-import NixieTube from "./NixieTube.jsx";
-import BrassGearDial from "./BrassGearDial.jsx";
+import { useProgression } from "../../hooks/useProgression.jsx";
+import { SCHOOLS } from "../../data/schools.js";
 import HolographicEmbed from "./HolographicEmbed.jsx";
-import "./ListenPage.css";
 
 export default function ListenPage() {
-  const { currentKey, currentSong, setCurrentKey } = useCurrentSong();
+  const { currentKey, currentSong, setCurrentKey, library } = useCurrentSong();
+  const { checkUnlocked } = useProgression();
   const [isTuning, setIsTuning] = useState(false);
+  const [lastTunedSchool, setLastTunedSchool] = useState(""); // NEW
   const interfaceControls = useAnimation();
 
-  const currentColor = COLORS[currentSong.school] || COLORS.VOID;
-  const entries = useMemo(() => Object.entries(LIBRARY), []);
+  const entries = useMemo(() => Object.entries(library), [library]);
+  const currentColor = SCHOOLS[currentSong.school]?.color || "#a1a1aa";
+  
+  // Get all schools sorted by angle
+  const sortedSchools = useMemo(() => {
+    return Object.values(SCHOOLS).sort((a, b) => a.angle - b.angle);
+  }, []);
 
   const handleTune = async (targetSchool, songKey) => {
     if (isTuning) return;
+    
+    // Check if target school is unlocked
+    if (!checkUnlocked(targetSchool)) {
+      // Show locked feedback maybe? For now, just prevent tuning.
+      console.warn(`School ${targetSchool} is locked.`);
+      return;
+    }
+    
     setIsTuning(true);
-
-    // Update song immediately for responsiveness
     setCurrentKey(songKey);
+    setLastTunedSchool(targetSchool);
 
-    // Jitter animation
     await interfaceControls.start({
       x: [0, -4, 4, -2, 2, 0],
       y: [0, 2, -2, 1, -1, 0],
@@ -32,22 +43,21 @@ export default function ListenPage() {
     setIsTuning(false);
   };
 
-  // Convert school to frequency display
-  const getFrequency = (school) => {
-    const freqMap = {
-      VOID: "00.0",
-      PSYCHIC: "72.0",
-      ALCHEMY: "144",
-      WILL: "216",
-      SONIC: "288",
-    };
-    return freqMap[school] || "00.0";
-  };
-
   return (
-    <section className="listenPage">
+    <section className="section min-h-screen">
+      {/* Live announcement */}
+      <div 
+        role="status" 
+        aria-live="polite" 
+        className="sr-only"
+      >
+        {lastTunedSchool 
+          ? `Tuned to ${currentSong.school} school. ${currentSong.title} now playing.`
+          : "Radio interface loaded. Use arrow keys or tab to navigate schools."}
+      </div>
+
       <div className="container">
-        <header className="sectionHeader">
+        <header className="section-header">
           <div className="kicker">Aetheric Frequency Modulator</div>
           <h1 className="title">Tune the school. Lock the signal.</h1>
           <p className="subtitle">
@@ -56,128 +66,80 @@ export default function ListenPage() {
         </header>
 
         <motion.div
-          className="radio-cabinet"
+          className="glass-strong p-8 rounded-2xl border-soft shadow-elevated relative overflow-hidden"
           animate={interfaceControls}
         >
-          {/* Ambient glow */}
-          <motion.div
-            className="radio-glow"
-            aria-hidden="true"
-            animate={{
-              background: `radial-gradient(600px 400px at 30% 40%, ${currentColor}22, transparent 60%)`,
-            }}
-            transition={{ duration: 0.9 }}
-          />
-
-          {/* Top panel with nixie tubes */}
-          <div className="nixie-panel">
-            <div className="nixie-label">FREQUENCY</div>
-            <div className="nixie-display">
-              {getFrequency(currentSong.school).split("").map((digit, i) => (
-                <NixieTube key={i} value={digit} index={i} />
-              ))}
-            </div>
-            <div className="nixie-unit">MHz</div>
-          </div>
-
           {/* Main control area */}
-          <div className="radio-main">
-            {/* Brass dial section */}
-            <div className="dial-section">
-              <BrassGearDial
-                school={currentSong.school}
-                onTune={() => {
-                  const keys = entries.map(([k]) => k);
-                  const idx = Math.max(0, keys.indexOf(currentKey));
-                  const nextKey = keys[(idx + 1) % keys.length];
-                  const next = LIBRARY[nextKey];
-                  handleTune(next.school, nextKey);
-                }}
-                disabled={isTuning}
-                angle={SCHOOL_ANGLES[currentSong.school] || 0}
-              />
-              <div className="dial-label">
-                <span className="dial-school" style={{ color: currentColor }}>
-                  {currentSong.school}
-                </span>
-                <span className="dial-status">LOCKED</span>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+             {/* School Wheel - Shows unlock status */}
+            <div className="relative aspect-square max-w-md mx-auto flex items-center justify-center">
+              {sortedSchools.map(school => {
+                const unlocked = checkUnlocked(school.id);
+                const isSelected = currentSong.school === school.id;
+                return (
+                  <button
+                    key={school.id}
+                    className={`absolute w-16 h-16 rounded-full flex items-center justify-center transition-all ${unlocked ? 'glass border-glow' : 'opacity-40 grayscale'} ${isSelected ? 'scale-125 border-bold' : 'hover:scale-110'}`}
+                    style={{
+                      borderColor: isSelected ? `var(--school-${school.id.toLowerCase()})` : 'var(--border-soft)',
+                      transform: `rotate(${school.angle}deg) translateX(140px) rotate(-${school.angle}deg)`,
+                      boxShadow: isSelected ? `0 0 30px var(--school-${school.id.toLowerCase()}-glow)` : 'none'
+                    }}
+                    onClick={() => {
+                        const song = entries.find(([_k, t]) => t.school === school.id);
+                        if (song) handleTune(school.id, song[0]);
+                    }}
+                    disabled={!unlocked}
+                    title={unlocked ? school.name : `Locked - ${school.unlockXP} XP required`}
+                  >
+                    {unlocked ? (
+                      <span className="font-mono text-[10px] font-bold" style={{ color: `var(--school-${school.id.toLowerCase()})` }}>{school.id}</span>
+                    ) : (
+                      <span className="text-lg">🔒</span>
+                    )}
+                  </button>
+                );
+              })}
+              <div className="w-32 h-32 rounded-full glass-elevated flex items-center justify-center flex-col text-center border-bold">
+                 <div className="kicker text-[8px] mb-1">FREQ</div>
+                 <div className="font-mono text-xl" style={{ color: currentColor }}>{currentSong.school}</div>
               </div>
             </div>
 
             {/* Player section */}
-            <div className="player-section">
-              <div className="player-header">
-                <h3 className="player-title">{currentSong.title}</h3>
-                <div className="oscilloscope">
-                  <div className="oscilloscope-wave" style={{ background: `linear-gradient(90deg, transparent 0%, ${currentColor} 2%, transparent 4%)` }} />
-                  <div className="oscilloscope-grid" />
-                </div>
+            <div className="flex flex-col gap-6">
+              <div className="glass p-6 rounded-xl border-soft">
+                <h3 className="text-xl font-bold mb-4">{currentSong.title}</h3>
+                <HolographicEmbed
+                  trackId={currentSong.sc}
+                  color={currentColor}
+                />
               </div>
 
-              <HolographicEmbed
-                trackId={currentSong.sc}
-                color={currentColor}
-              />
-
-              {/* Visualizer bars */}
-              <div className="vacuum-visualizer">
-                {Array.from({ length: 14 }).map((_, i) => (
-                  <motion.div
-                    key={i}
-                    className="vacuum-bar"
-                    style={{
-                      background: `linear-gradient(to top, ${currentColor}, ${currentColor}88)`,
-                      boxShadow: `0 0 10px ${currentColor}55`,
-                    }}
-                    animate={!isTuning ? { height: [10, 50, 20, 60, 15] } : { height: 10 }}
-                    transition={{
-                      duration: 0.55,
-                      repeat: Infinity,
-                      repeatType: "mirror",
-                      delay: i * 0.05,
-                      ease: "easeInOut",
-                    }}
-                  />
-                ))}
+              {/* Track selection grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {entries.map(([key, t]) => {
+                  const active = key === currentKey;
+                  const unlocked = checkUnlocked(t.school);
+                  const schoolColor = unlocked ? (SCHOOLS[t.school]?.color || "#888") : "#444";
+                  return (
+                    <button
+                      key={key}
+                      className={`flex flex-col p-4 rounded-lg border transition-all text-left ${active ? 'glass-strong border-bold' : 'glass border-subtle hover:border-soft'} ${!unlocked ? 'opacity-50 cursor-not-allowed' : ''}`}
+                      onClick={() => handleTune(t.school, key)}
+                      disabled={isTuning || !unlocked}
+                      title={unlocked ? `${t.title}` : `School ${t.school} is locked`}
+                    >
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: schoolColor, boxShadow: `0 0 10px ${schoolColor}` }} />
+                        <span className="font-bold text-sm truncate">{t.title}</span>
+                      </div>
+                      <span className="font-mono text-[10px] text-muted">{t.school}</span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
-          </div>
-
-          {/* Track selection grid */}
-          <div className="track-panel">
-            <div className="track-panel-header">
-              <span className="rivet" />
-              <span className="track-panel-title">SIGNAL ARCHIVE</span>
-              <span className="rivet" />
-            </div>
-            <div className="trackGrid">
-              {entries.map(([key, t]) => {
-                const active = key === currentKey;
-                const dotColor = COLORS[t.school] || COLORS.VOID;
-                return (
-                  <button
-                    key={key}
-                    className={`trackCard ${active ? "trackCardActive" : ""}`}
-                    onClick={() => handleTune(t.school, key)}
-                    disabled={isTuning}
-                  >
-                    <div className="trackTop">
-                      <span className="vacuum-indicator" style={{ background: dotColor, boxShadow: `0 0 8px ${dotColor}` }} />
-                      <p className="trackTitle">{t.title}</p>
-                    </div>
-                    <div className="trackMeta">{t.school} FREQ</div>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Decorative elements */}
-          <div className="cabinet-screws">
-            <span className="screw screw-tl" />
-            <span className="screw screw-tr" />
-            <span className="screw screw-bl" />
-            <span className="screw screw-br" />
           </div>
         </motion.div>
       </div>

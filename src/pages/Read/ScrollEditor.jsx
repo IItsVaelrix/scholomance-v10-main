@@ -55,9 +55,15 @@ export default function ScrollEditor({
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -10 }}
       transition={{ duration: 0.2 }}
+      role="form"
+      aria-label="Scroll editor"
     >
       <div className="editor-header">
+        <label htmlFor="scroll-title" className="sr-only">
+          Scroll Title
+        </label>
         <input
+          id="scroll-title"
           type="text"
           className="editor-title-input"
           placeholder="Scroll Title..."
@@ -65,7 +71,12 @@ export default function ScrollEditor({
           onChange={(e) => setTitle(e.target.value)}
           disabled={disabled || isSaving}
           maxLength={100}
+          aria-required="true"
+          aria-describedby="title-hint"
         />
+        <span id="title-hint" className="sr-only">
+          Enter a title for your scroll, up to 100 characters
+        </span>
         <div className="editor-stats">
           <span className="stat-badge">{wordCount} words</span>
           <span className="stat-badge">{charCount} chars</span>
@@ -78,7 +89,11 @@ export default function ScrollEditor({
           <span className="margin-glyph">&#x263D;</span>
           <span className="margin-glyph">&#x2641;</span>
         </div>
+        <label htmlFor="scroll-content" className="sr-only">
+          Scroll Content
+        </label>
         <textarea
+          id="scroll-content"
           ref={textareaRef}
           className="editor-textarea"
           placeholder="Inscribe thy verses upon this sacred parchment...
@@ -89,7 +104,12 @@ Click any word after saving to analyze its phonetic structure."
           onKeyDown={handleKeyDown}
           disabled={disabled || isSaving}
           spellCheck="false"
+          aria-required="true"
+          aria-describedby="content-hint"
         />
+        <span id="content-hint" className="sr-only">
+          Enter the text you want to analyze. Press Ctrl+S to save.
+        </span>
       </div>
 
       <div className="editor-footer">
