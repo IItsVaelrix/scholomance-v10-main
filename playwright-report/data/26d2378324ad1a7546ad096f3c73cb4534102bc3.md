@@ -1,0 +1,72 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e1]:
+  - generic [ref=e3]:
+    - banner:
+      - navigation [ref=e4]:
+        - generic [ref=e5]:
+          - link "Go to Watch" [ref=e6] [cursor=pointer]:
+            - /url: /watch
+            - text: SCHOLOMANCE
+          - navigation "Primary" [ref=e8]:
+            - link "Watch" [ref=e10] [cursor=pointer]:
+              - /url: /watch
+            - link "Listen" [ref=e12] [cursor=pointer]:
+              - /url: /listen
+            - link "Read" [ref=e14] [cursor=pointer]:
+              - /url: /read
+    - main [ref=e16]:
+      - generic [ref=e19]:
+        - complementary [ref=e20]:
+          - generic [ref=e21]:
+            - generic [ref=e22]:
+              - heading "📜Saved Scrolls1" [level=3] [ref=e23]
+              - button "✚ New" [ref=e24] [cursor=pointer]
+            - generic [ref=e26]:
+              - button "Line Spacing Test First line. Second line. Fourth line. 6 wordsJust now" [ref=e27]:
+                - generic [ref=e28]: Line Spacing Test
+                - generic [ref=e29]: First line. Second line. Fourth line.
+                - generic [ref=e30]:
+                  - generic [ref=e31]: 6 words
+                  - text: Just now
+              - button "Delete scroll" [ref=e32]: ✕
+        - main [ref=e33]:
+          - generic [ref=e34]:
+            - generic [ref=e35]:
+              - generic [ref=e36]: Analysis mode is ON
+              - paragraph [ref=e37]: Word definitions and phoneme analysis stay off until you opt in.
+            - button "Toggle analysis mode" [pressed] [ref=e38]: Disable analysis mode
+          - generic [ref=e39]:
+            - generic [ref=e40]:
+              - generic [ref=e41]: Scroll Title
+              - textbox "Scroll Title" [ref=e42]:
+                - /placeholder: Scroll Title...
+                - text: Line Spacing Test
+              - generic [ref=e43]:
+                - generic [ref=e44]: 6 words
+                - generic [ref=e45]: 47 / 100,000 chars
+            - generic [ref=e46]:
+              - generic:
+                - generic: First line.
+                - generic: Second line.
+                - generic: Fourth line.
+              - textbox "Scroll content" [active] [ref=e47]:
+                - paragraph [ref=e48]: First line.
+                - paragraph [ref=e49]
+                - paragraph [ref=e50]: Second line.
+                - paragraph [ref=e51]
+                - paragraph [ref=e52]
+                - paragraph [ref=e53]
+                - paragraph [ref=e54]: Fourth line.
+            - generic [ref=e55]:
+              - generic [ref=e56]:
+                - generic [ref=e57]: Ctrl
+                - text: +
+                - generic [ref=e58]: S
+                - text: to save
+              - button "★ Update Scroll" [ref=e60] [cursor=pointer]:
+                - generic [ref=e61]: ★
+                - text: Update Scroll
+  - img
+```

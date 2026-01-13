@@ -1,0 +1,83 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e1]:
+  - generic [ref=e3]:
+    - banner:
+      - navigation [ref=e4]:
+        - generic [ref=e5]:
+          - link "Go to Watch" [ref=e6] [cursor=pointer]:
+            - /url: /watch
+            - text: SCHOLOMANCE
+          - navigation "Primary" [ref=e8]:
+            - link "Watch" [ref=e10] [cursor=pointer]:
+              - /url: /watch
+            - link "Listen" [ref=e12] [cursor=pointer]:
+              - /url: /listen
+            - link "Read" [ref=e14] [cursor=pointer]:
+              - /url: /read
+    - main [ref=e16]:
+      - generic [ref=e18]:
+        - generic [ref=e19]:
+          - complementary [ref=e20]:
+            - generic [ref=e21]:
+              - generic [ref=e22]:
+                - heading "📜Saved Scrolls1" [level=3] [ref=e23]
+                - button "✚ New" [ref=e24] [cursor=pointer]
+              - generic [ref=e26]:
+                - button "Untitled Scroll The cat sat on the mat 6 wordsJust now" [active] [ref=e27]:
+                  - generic [ref=e28]: Untitled Scroll
+                  - generic [ref=e29]: The cat sat on the mat
+                  - generic [ref=e30]:
+                    - generic [ref=e31]: 6 words
+                    - text: Just now
+                - button "Delete scroll" [ref=e32]: ✕
+          - main [ref=e33]:
+            - generic [ref=e34]:
+              - generic [ref=e35]:
+                - generic [ref=e36]: Analysis mode is ON
+                - paragraph [ref=e37]: Word definitions and phoneme analysis stay off until you opt in.
+              - button "Toggle analysis mode" [pressed] [ref=e38]: Disable analysis mode
+            - generic [ref=e39]:
+              - generic [ref=e40]:
+                - generic [ref=e41]: Scroll Title
+                - textbox "Scroll Title" [ref=e42]:
+                  - /placeholder: Scroll Title...
+                  - text: Untitled Scroll
+                - generic [ref=e43]:
+                  - generic [ref=e44]: 6 words
+                  - generic [ref=e45]: 22 / 100,000 chars
+              - generic [ref=e46]:
+                - generic [ref=e48]: The cat sat on the mat
+                - textbox "Scroll content" [ref=e49]:
+                  - paragraph [ref=e50]: The cat sat on the mat
+              - generic [ref=e51]:
+                - generic [ref=e52]:
+                  - generic [ref=e53]: Ctrl
+                  - text: +
+                  - generic [ref=e54]: S
+                  - text: to save
+                - button "★ Update Scroll" [ref=e56] [cursor=pointer]:
+                  - generic [ref=e57]: ★
+                  - text: Update Scroll
+        - dialog "THE" [ref=e58]:
+          - generic [ref=e59]:
+            - generic [ref=e60]:
+              - heading "THE" [level=3] [ref=e61]
+              - button "Close" [ref=e62] [cursor=pointer]:
+                - generic [ref=e63]: ✕
+            - generic [ref=e64]:
+              - generic [ref=e65]:
+                - generic [ref=e66]: ✦Vowel Family
+                - generic [ref=e67]: EH
+              - generic [ref=e68]:
+                - generic [ref=e69]: ✧Phonemes
+                - generic [ref=e70]: THE
+              - generic [ref=e71]:
+                - generic [ref=e72]: ✨Rhyme Key
+                - generic [ref=e73]: EH-open
+            - generic [ref=e74]:
+              - generic [ref=e75]: ❧
+              - paragraph [ref=e76]: Word analysis powered by the ST-XPD vowel family system.
+  - img
+```

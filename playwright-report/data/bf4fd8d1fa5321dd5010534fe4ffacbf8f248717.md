@@ -1,0 +1,59 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e1]:
+  - generic [ref=e3]:
+    - banner:
+      - navigation [ref=e4]:
+        - generic [ref=e5]:
+          - link "Go to Watch" [ref=e6] [cursor=pointer]:
+            - /url: /watch
+            - text: SCHOLOMANCE
+          - navigation "Primary" [ref=e8]:
+            - link "Watch" [ref=e10] [cursor=pointer]:
+              - /url: /watch
+            - link "Listen" [ref=e12] [cursor=pointer]:
+              - /url: /listen
+            - link "Read" [ref=e14] [cursor=pointer]:
+              - /url: /read
+    - main [ref=e16]:
+      - generic [ref=e19]:
+        - complementary [ref=e20]:
+          - generic [ref=e21]:
+            - generic [ref=e22]:
+              - heading "📜Saved Scrolls0" [level=3] [ref=e23]
+              - button "✚ New" [ref=e24] [cursor=pointer]
+            - generic [ref=e26]:
+              - generic [ref=e27]: ✨
+              - paragraph [ref=e28]: No scrolls yet
+              - text: Begin thy first inscription above
+        - main [ref=e29]:
+          - generic [ref=e30]:
+            - generic [ref=e31]:
+              - generic [ref=e32]: Analysis mode is ON
+              - paragraph [ref=e33]: Word definitions and phoneme analysis stay off until you opt in.
+            - button "Toggle analysis mode" [pressed] [ref=e34]: Disable analysis mode
+          - generic [ref=e35]:
+            - generic [ref=e36]:
+              - generic [ref=e37]: Scroll Title
+              - textbox "Scroll Title" [ref=e38]:
+                - /placeholder: Scroll Title...
+                - text: Empty Test
+              - generic [ref=e39]:
+                - generic [ref=e40]: 0 words
+                - generic [ref=e41]: 0 / 100,000 chars
+            - generic [ref=e42]:
+              - textbox "Scroll content" [active] [ref=e43]:
+                - paragraph [ref=e44]
+              - generic: Inscribe thy verses upon this sacred parchment...
+            - generic [ref=e45]:
+              - generic [ref=e46]:
+                - generic [ref=e47]: Ctrl
+                - text: +
+                - generic [ref=e48]: S
+                - text: to save
+              - button "★ Save Scroll" [disabled] [ref=e50]:
+                - generic [ref=e51]: ★
+                - text: Save Scroll
+  - img
+```
